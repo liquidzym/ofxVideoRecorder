@@ -392,7 +392,9 @@ bool ofxVideoRecorder::setupCustomOutput(int w, int h, float fps, int sampleRate
 	//cerr << cmd.str();
 #endif
 #ifdef TARGET_WIN32
-	cmd << ffmpegLocation << "ffmpeg" << " -y ";
+
+	cmd << ffmpegLocation << " -y ";
+	//cmd << ffmpegLocation << "ffmpeg" << " -y ";
 
 	if (bRecordAudio){
 		cmd << " -acodec pcm_s16le -f s16le -ar " << sampleRate << " -ac " << audioChannels << " -i " << "\\\\.\\pipe\\audioPipe";
