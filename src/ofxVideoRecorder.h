@@ -47,10 +47,11 @@ private:
 class execThread : public ofThread{
 public:
     execThread();
-    void setup(string command);
+    void setup(string command, string excommand = "");
     void threadedFunction();
 private:
     string execCommand;
+	string extraCommand;		// ∂ÓÕ‚÷¥––”Ôæ‰
 };
 
 struct audioFrameShort {
@@ -61,12 +62,11 @@ struct audioFrameShort {
 class ofxVideoDataWriterThread : public ofThread {
 public:
     ofxVideoDataWriterThread();
-//    void setup(ofFile *file, lockFreeQueue<ofPixels *> * q);
 #if defined( TARGET_OSX ) || defined( TARGET_LINUX )
     void setup(string filePath, lockFreeQueue<ofPixels *> * q);
 #endif
 #ifdef TARGET_WIN32
-	void setup(HANDLE pipeHandle, string filePath, lockFreeQueue<ofPixels *> * q);
+	void setup(HANDLE pipeHandle, lockFreeQueue<ofPixels *> * q);
 	HANDLE videoHandle;
 	HANDLE fileHandle;
 #endif
@@ -77,7 +77,6 @@ public:
 private:
     ofMutex conditionMutex;
     Poco::Condition condition;
-//    ofFile * writer;
     string filePath;
     int fd;
     lockFreeQueue<ofPixels *> * queue;
@@ -88,12 +87,11 @@ private:
 class ofxAudioDataWriterThread : public ofThread {
 public:
     ofxAudioDataWriterThread();
-//    void setup(ofFile *file, lockFreeQueue<audioFrameShort *> * q);
 #if defined( TARGET_OSX ) || defined( TARGET_LINUX )
     void setup(string filePath, lockFreeQueue<audioFrameShort *> * q);
 #endif
 #ifdef TARGET_WIN32
-	void setup(HANDLE pipeHandle, string filePath, lockFreeQueue<audioFrameShort *> * q);
+	void setup(HANDLE pipeHandle, lockFreeQueue<audioFrameShort *> * q);
 	HANDLE audioHandle;
 	HANDLE fileHandle;
 #endif
@@ -104,7 +102,6 @@ public:
 private:
     ofMutex conditionMutex;
     Poco::Condition condition;
-//    ofFile * writer;
     string filePath;
     int fd;
     lockFreeQueue<audioFrameShort *> * queue;
@@ -117,14 +114,17 @@ class ofxVideoRecorder
 public:
     ofxVideoRecorder();
     bool setup(string fname, int w, int h, float fps, int sampleRate=0, int channels=0);
-    bool setupCustomOutput(int w, int h, float fps, string outputString);
-    bool setupCustomOutput(int w, int h, float fps, int sampleRate, int channels, string outputString);
+	bool setupCustomOutput(int w, int h, float fps, string outputLocation);
+	bool setupCustomOutput(int w, int h, float fps, int sampleRate, int channels, string outputLocation);
+	bool runCustomScript(string script);
     void setQuality(ofImageQualityType q);
     void addFrame(const ofPixels &pixels);
     void addAudioSamples(float * samples, int bufferSize, int numChannels);
     void close();
 
     void setFfmpegLocation(string loc) { ffmpegLocation = loc; }
+	void setMovFileExtension(string extension) { movFileExt = extension; }
+	void setAudioFileExtension(string extension) { audioFileExt = extension; }
     void setVideoCodec(string codec) { videoCodec = codec; }
     void setAudioCodec(string codec) { audioCodec = codec; }
     void setVideoBitrate(string bitrate) { videoBitrate = bitrate; }
@@ -138,13 +138,15 @@ public:
     int getAudioQueueSize(){ return audioFrames.size(); }
     bool isInitialized(){ return bIsInitialized; }
 
-    string getMoviePath(){ return moviePath; }
+    string getMoviePath(){ return filePath; }
     int getWidth(){return width;}
     int getHeight(){return height;}
 
 private:
+	string filePath;
     string fileName;
-    string moviePath;
+	string movFileExt;
+	string audioFileExt;
     string videoPipePath, audioPipePath;
     string ffmpegLocation;
     string videoCodec, audioCodec, videoBitrate, audioBitrate, pixelFormat;
@@ -161,7 +163,9 @@ private:
     ofxVideoDataWriterThread videoThread;
     ofxAudioDataWriterThread audioThread;
     execThread ffmpegThread;
-//    ofFile videoPipe, audioPipe;
+	execThread ffmpegVideoThread;
+	execThread ffmpegAudioThread;
+	bool vThreadRunning, aThreadRunning;
     int videoPipeFd, audioPipeFd;
     int pipeNumber;
 
@@ -171,9 +175,7 @@ private:
 
 #ifdef TARGET_WIN32
 	HANDLE hVPipe;
-	HANDLE hVFPipe;
 	HANDLE hAPipe;
-	HANDLE hAFPipe;
 	LPTSTR vPipename;
 	LPTSTR aPipename;
 #endif
