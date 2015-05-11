@@ -47,11 +47,12 @@ private:
 class execThread : public ofThread{
 public:
     execThread();
-    void setup(string command, string excommand = "");
+    void setup(string command, string excommand = "", string clcommand = "");
     void threadedFunction();
 private:
     string execCommand;
 	string extraCommand;		// ¶îÍâÖ´ĞĞÓï¾ä
+	string cleanCommand;		// É¾³ıÓï¾ä
 };
 
 struct audioFrameShort {

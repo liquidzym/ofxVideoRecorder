@@ -40,9 +40,10 @@ execThread::execThread(){
 	execCommand = "";
 }
 
-void execThread::setup(string command, string excommand){
+void execThread::setup(string command, string excommand, string clcommand){
 	execCommand = command;
 	extraCommand = excommand;
+	cleanCommand = clcommand;
 	startThread(true);
 }
 
@@ -51,6 +52,8 @@ void execThread::threadedFunction(){
 		system(execCommand.c_str());
 		if (extraCommand != "")
 			system(extraCommand.c_str());
+		if (cleanCommand != "")
+			system(cleanCommand.c_str());
 	}
 }
 
@@ -617,12 +620,16 @@ void ofxVideoRecorder::close()
 
 		// 压缩一份小的
 		stringstream extraCmd;
-		//如果只要一个视频的话注释掉下面这行就可以
 		extraCmd << ffmpegLocation << " -i " << filePath << movFileExt << " -vf scale=160:120 " << filePath << "_small" << movFileExt;
 		ofLogNotice("FFMpeg Resize") << " -------------------------- ";
 		ofLogNotice("FFMpeg Resize") << extraCmd.str();
 
-		ffmpegThread.setup(finalCmd.str(), extraCmd.str());
+		stringstream delCmd;
+		delCmd << "del " << filePath << "_vtemp" << movFileExt << " " << filePath << "_atemp" << audioFileExt;
+		ofLogNotice("FFMpeg Delete Temp") << " ----------------------------- ";
+		ofLogNotice("FFMpeg Delete Temp") << delCmd.str();
+
+		ffmpegThread.setup(finalCmd.str(), extraCmd.str(), delCmd.str());
 
 	}
 	else
